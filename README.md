@@ -4,7 +4,7 @@ Jev reads the wire for Robinhood tokenized stocks, judges every headline, then i
 
 - **Jev** is [TypeSafe's System One judgment model](https://docs.typesafe.ai), served through OpenRouter's Decisions API (`typesafe/jev-1.13`). It generates no text. Every headline gets 5 calibrated typed judgments (relevance, bullish lean, catalyst type, magnitude, horizon), and signal rationales are composed in code from those numbers.
 - A full run over the ~50-ticker universe reads ~400 headlines, makes ~2,000 judgments, takes ~12s, and costs under **$0.01**.
-- Runs autonomously every 6 hours on a Cloudflare Cron Trigger; the dashboard also has a live ▶ RUN JEV button that streams the run in real time.
+- Runs autonomously every 6 hours on a Cloudflare Cron Trigger. Visitors get a replay of the latest run, streamed in as if live.
 
 ## Stack
 
@@ -12,7 +12,6 @@ Next.js 15 (App Router) → Cloudflare Workers via `@opennextjs/cloudflare`. Per
 
 ```
 src/agent/       pipeline: sources → market → jev (judgments) → signals → run (orchestrator)
-src/app/api/run  POST: starts a run, streams NDJSON progress events
 src/app/api/runs GET: run history / latest (KV)
 src/components/  the 3-column live dashboard
 worker/index.ts  custom Worker entry: OpenNext fetch + cron `scheduled` handler
