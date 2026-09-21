@@ -4,7 +4,7 @@ Jev reads the wire for Robinhood tokenized stocks, judges every headline, then i
 
 ## $JEVNEWS
 
-CA: `{ca}`
+CA: `0x651741b6f01c7e16f4a84ea117baeb2bece87aa2`
 
 The live contract address is always shown on [jevnews.dev](https://jevnews.dev) and nowhere else. Any address posted anywhere else is fake.
 
