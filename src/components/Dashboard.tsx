@@ -43,13 +43,29 @@ function GitHubIcon() {
   );
 }
 
+interface Totals {
+  since: string;
+  runs: number;
+  articles: number;
+  judgments: number;
+  costUsd: number;
+  buys: number;
+  risks: number;
+}
+
+const compact = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 10_000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+
 function CaStrip() {
   const [ca, setCa] = useState<string | null>(null);
+  const [totals, setTotals] = useState<Totals | null>(null);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((d: { ca: string | null }) => setCa(d.ca))
+      .then((d: { ca: string | null; totals: Totals | null }) => {
+        setCa(d.ca);
+        setTotals(d.totals);
+      })
       .catch(() => {});
   }, []);
   const copy = () => {
@@ -76,6 +92,13 @@ function CaStrip() {
         </button>
       ) : (
         <span className="text-[var(--faint)]">TBA</span>
+      )}
+      {totals && (
+        <span className="ml-auto shrink-0 text-[var(--faint)] hidden sm:inline">
+          lifetime · {compact(totals.articles)} headlines · {compact(totals.judgments)} judgments ·{" "}
+          <span className="text-[var(--buy)]">{totals.buys} buys</span> ·{" "}
+          <span className="text-[var(--risk)]">{totals.risks} risks</span> · ${totals.costUsd.toFixed(2)} spent
+        </span>
       )}
     </div>
   );

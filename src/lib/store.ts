@@ -15,6 +15,19 @@ export interface RunSummary {
   risks: number;
 }
 
+/** Lifetime totals across every run, never evicted. */
+export interface Totals {
+  since: string;
+  runs: number;
+  articles: number;
+  judgments: number;
+  costUsd: number;
+  buys: number;
+  risks: number;
+}
+
+const TOTALS_KEY = "stats:totals";
+
 export interface KV {
   get(key: string, type: "json"): Promise<unknown>;
   get(key: string, type: "text"): Promise<string | null>;
@@ -69,6 +82,29 @@ export async function saveRunTo(store: KV | null, result: RunResult): Promise<vo
   for (const old of evicted) {
     if (!next.some((r) => r.id === old.id)) await store.delete(`run:${old.id}`);
   }
+
+  const totals = ((await store.get(TOTALS_KEY, "json")) as Totals | null) ?? {
+    since: result.id,
+    runs: 0,
+    articles: 0,
+    judgments: 0,
+    costUsd: 0,
+    buys: 0,
+    risks: 0,
+  };
+  totals.runs += 1;
+  totals.articles += summary.articlesScanned;
+  totals.judgments += summary.judgmentCount;
+  totals.costUsd = Math.round((totals.costUsd + summary.costUsd) * 1e6) / 1e6;
+  totals.buys += summary.buys;
+  totals.risks += summary.risks;
+  await store.put(TOTALS_KEY, JSON.stringify(totals));
+}
+
+export async function getTotals(): Promise<Totals | null> {
+  const store = kv();
+  if (!store) return null;
+  return ((await store.get(TOTALS_KEY, "json")) as Totals | null) ?? null;
 }
 
 /**
