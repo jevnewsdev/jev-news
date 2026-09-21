@@ -83,7 +83,7 @@ function CaStrip() {
 
 export default function Dashboard() {
   const { view: v, history, loadRun } = useRun();
-  const replaying = v.status === "replaying";
+  const replaying = v.status === "replaying" || v.status === "running";
   const buys = v.signals.filter((s) => s.kind === "BUY").length;
   const risks = v.signals.filter((s) => s.kind === "RISK").length;
 
@@ -105,7 +105,9 @@ export default function Dashboard() {
             <span
               className={`inline-block w-1.5 h-1.5 rounded-full ${replaying ? "live-dot bg-[var(--buy)]" : "bg-[var(--buy)]"}`}
             />
-            {replaying ? (
+            {v.status === "running" ? (
+              <>live run · {v.elapsedS.toFixed(1)}s</>
+            ) : replaying ? (
               <>replaying · {v.elapsedS.toFixed(1)}s</>
             ) : v.status === "idle" ? (
               <>

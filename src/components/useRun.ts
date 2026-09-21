@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Article, CatalystPattern, Judgment, RunResult, Signal } from "@/agent/types";
+import type { Article, CatalystPattern, Judgment, RunEvent, RunResult, Signal } from "@/agent/types";
 import { buildPatterns } from "@/agent/signals";
 import type { RunSummary } from "@/lib/store";
 
 export interface View {
-  status: "loading" | "idle" | "replaying" | "empty";
+  status: "loading" | "idle" | "replaying" | "running" | "empty";
   runId: string | null;
   trigger: "manual" | "cron" | null;
   elapsedS: number;
@@ -126,6 +126,60 @@ export function useRun() {
     [stopReplay],
   );
 
+  /** Real live run, key-gated: streams NDJSON events from POST /api/run. */
+  const startLive = useCallback(
+    async (key: string) => {
+      stopReplay();
+      const t0 = Date.now();
+      setView({ ...EMPTY, status: "running", trigger: "manual" });
+      const timer = setInterval(() => {
+        setView((v) => (v.status === "running" ? { ...v, elapsedS: (Date.now() - t0) / 1000 } : v));
+      }, 100);
+      const apply = (e: RunEvent) =>
+        setView((v) => {
+          switch (e.type) {
+            case "scan":
+              return { ...v, tickersScanned: e.scanned, totalTickers: e.totalTickers, articles: [...e.articles, ...v.articles] };
+            case "judgments":
+              return { ...v, judgments: [...v.judgments, ...e.judgments], judgmentCount: e.judgmentCount, costUsd: e.costUsd, patterns: buildPatterns([...v.judgments, ...e.judgments]) };
+            case "signal":
+              return { ...v, signals: sortSignals([...v.signals, e.signal]) };
+            case "result":
+              return fromResult(e.result);
+            default:
+              return v;
+          }
+        });
+      try {
+        const res = await fetch("/api/run", { method: "POST", headers: { "x-run-key": key } });
+        if (!res.ok || !res.body) throw new Error(`run failed (${res.status})`);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              apply(JSON.parse(line) as RunEvent);
+            } catch {
+              /* partial line */
+            }
+          }
+        }
+      } catch {
+        setView((v) => (v.status === "running" ? { ...v, status: "idle" } : v));
+      } finally {
+        clearInterval(timer);
+      }
+    },
+    [stopReplay],
+  );
+
   const loadHistory = useCallback(async () => {
     try {
       const res = await fetch("/api/runs");
@@ -154,7 +208,9 @@ export function useRun() {
   );
 
   useEffect(() => {
-    loadRun(undefined, { replay: true });
+    const key = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("key") : null;
+    if (key) startLive(key);
+    else loadRun(undefined, { replay: true });
     loadHistory();
     return stopReplay;
     // eslint-disable-next-line react-hooks/exhaustive-deps
