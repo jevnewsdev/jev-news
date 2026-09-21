@@ -14,6 +14,10 @@
       "id": "f0a1bad4a25341078f268b350e94288e"
     }
   ],
+  "routes": [
+    { "pattern": "jevnews.dev", "custom_domain": true },
+    { "pattern": "www.jevnews.dev", "custom_domain": true }
+  ],
   "triggers": {
     "crons": ["0 */6 * * *"]
   },

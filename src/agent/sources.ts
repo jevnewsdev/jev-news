@@ -28,7 +28,7 @@ function parseRssItems(xml: string): { title: string; link: string; pubDate: str
       title: decode(tag("title")),
       link: decode(tag("link")),
       pubDate: tag("pubDate"),
-      source: decode(tag("source")) || "Google News",
+      source: decode(tag("source")),
     });
   }
   return items;
@@ -50,24 +50,39 @@ function splitTitleSource(title: string, fallback: string): { title: string; sou
   return { title, source: fallback };
 }
 
-export async function fetchNews(ticker: Ticker): Promise<Article[]> {
-  const q = encodeURIComponent(`"${ticker.query}" stock when:2d`);
-  const url = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`;
-  let xml = "";
+async function fetchFeed(url: string): Promise<string> {
   try {
     const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (jevnews)" } });
-    if (!res.ok) return [];
-    xml = await res.text();
+    if (!res.ok) return "";
+    return await res.text();
   } catch {
-    return [];
+    return "";
   }
+}
+
+/**
+ * Yahoo Finance per-ticker RSS is the primary feed (reachable from Cloudflare's
+ * edge). Google News is merged in when reachable (it 503s from datacenter IPs,
+ * so in production it usually contributes nothing).
+ */
+export async function fetchNews(ticker: Ticker): Promise<Article[]> {
+  const ySymbol = ticker.symbol.replace(".", "-");
+  const yahooUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${ySymbol}&region=US&lang=en-US`;
+  const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(`"${ticker.query}" stock when:2d`)}&hl=en-US&gl=US&ceid=US:en`;
+
+  const [yahooXml, googleXml] = await Promise.all([fetchFeed(yahooUrl), fetchFeed(googleUrl)]);
+
+  const raw = [
+    ...parseRssItems(yahooXml).map((it) => ({ ...it, fallbackSource: "Yahoo Finance" })),
+    ...parseRssItems(googleXml).map((it) => ({ ...it, fallbackSource: "Google News" })),
+  ];
 
   const now = Date.now();
   const seen = new Set<string>();
   const out: Article[] = [];
-  for (const item of parseRssItems(xml)) {
+  for (const item of raw) {
     if (!item.title) continue;
-    const { title, source } = splitTitleSource(item.title, item.source);
+    const { title, source } = splitTitleSource(item.title, item.source || item.fallbackSource);
     const norm = normalizeTitle(title);
     if (seen.has(norm)) continue;
     seen.add(norm);
