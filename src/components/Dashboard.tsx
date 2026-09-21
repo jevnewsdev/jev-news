@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useRun } from "./useRun";
 import { ColumnHeader, Counter, JudgmentScatter, PatternTable, ScanFeed, SignalCard } from "./columns";
 
@@ -39,6 +40,44 @@ function GitHubIcon() {
     <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden>
       <path d="M12 .5C5.6.5.5 5.6.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C15.3 4.5 16.3 4.8 16.3 4.8c.6 1.6.2 2.8.1 3.1.7.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.6 18.4.5 12 .5z" />
     </svg>
+  );
+}
+
+function CaStrip() {
+  const [ca, setCa] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((d: { ca: string | null }) => setCa(d.ca))
+      .catch(() => {});
+  }, []);
+  const copy = () => {
+    if (!ca) return;
+    navigator.clipboard?.writeText(ca).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <div className="mono flex items-center gap-2.5 border-b border-[var(--line)] py-2 text-[11px] overflow-hidden">
+      <span className="metal font-semibold shrink-0">$JEVNEWS</span>
+      <span className="text-[var(--faint)] shrink-0">CA</span>
+      {ca ? (
+        <button
+          onClick={copy}
+          title="Copy contract address"
+          className="group flex items-center gap-2 min-w-0 cursor-pointer"
+        >
+          <span className="text-[var(--dim)] group-hover:text-[var(--text)] truncate transition-colors">{ca}</span>
+          <span className={`shrink-0 text-[10px] ${copied ? "text-[var(--buy)]" : "text-[var(--faint)] group-hover:text-[var(--dim)]"}`}>
+            {copied ? "copied" : "copy"}
+          </span>
+        </button>
+      ) : (
+        <span className="text-[var(--faint)]">TBA</span>
+      )}
+    </div>
   );
 }
 
@@ -115,9 +154,11 @@ export default function Dashboard() {
         </div>
       </header>
 
+      <CaStrip />
+
       {/* columns */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 pt-5">
-        <section className="flex flex-col min-h-0 lg:h-[calc(100vh-130px)]">
+        <section className="flex flex-col min-h-0 lg:h-[calc(100vh-165px)]">
           <ColumnHeader n="01" title="Jev scans the wire" />
           <div className="flex gap-2 mb-3">
             <Counter value={String(v.articles.length)} label="headlines pulled" sub="last 48h" />
@@ -144,7 +185,7 @@ export default function Dashboard() {
           <PatternTable patterns={v.patterns} />
         </section>
 
-        <section className="flex flex-col min-h-0 lg:h-[calc(100vh-130px)]">
+        <section className="flex flex-col min-h-0 lg:h-[calc(100vh-165px)]">
           <ColumnHeader n="03" title="Jev issues signals" />
           <div className="flex gap-2 mb-3">
             <Counter value={String(buys)} label="buy signals" sub="score ≥ 65" accent={buys > 0 ? "buy" : undefined} />

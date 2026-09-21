@@ -17,6 +17,7 @@ export interface RunSummary {
 
 export interface KV {
   get(key: string, type: "json"): Promise<unknown>;
+  get(key: string, type: "text"): Promise<string | null>;
   put(key: string, value: string): Promise<void>;
   delete(key: string): Promise<void>;
 }
@@ -68,6 +69,18 @@ export async function saveRunTo(store: KV | null, result: RunResult): Promise<vo
   for (const old of evicted) {
     if (!next.some((r) => r.id === old.id)) await store.delete(`run:${old.id}`);
   }
+}
+
+/**
+ * $JEVNEWS contract address. Lives only in KV so the public repo cannot
+ * change it; update with:
+ * wrangler kv key put --namespace-id <id> --remote "config:ca" "<address>"
+ */
+export async function getTokenCa(): Promise<string | null> {
+  const store = kv();
+  if (!store) return null;
+  const ca = await store.get("config:ca", "text");
+  return ca?.trim() || null;
 }
 
 export async function listRuns(): Promise<RunSummary[]> {
