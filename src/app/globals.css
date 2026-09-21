@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #060607;
+  --panel: #0c0c0e;
+  --panel-2: #111114;
+  --line: #232328;
+  --line-bright: #3a3a42;
+  --text: #ecedef;
+  --dim: #8b8b94;
+  --faint: #5a5a63;
+  --silver-hi: #ffffff;
+  --silver-lo: #9a9aa4;
+  --buy: #4ade80;
+  --buy-dim: rgba(74, 222, 128, 0.12);
+  --risk: #f87171;
+  --risk-dim: rgba(248, 113, 113, 0.12);
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-sans: var(--font-grotesk), system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+/* faint star-field grain, echoing the logo background */
+.starfield {
+  background-image:
+    radial-gradient(1px 1px at 12% 28%, rgba(255, 255, 255, 0.14) 50%, transparent 51%),
+    radial-gradient(1px 1px at 43% 71%, rgba(255, 255, 255, 0.1) 50%, transparent 51%),
+    radial-gradient(1px 1px at 67% 15%, rgba(255, 255, 255, 0.12) 50%, transparent 51%),
+    radial-gradient(1px 1px at 81% 56%, rgba(255, 255, 255, 0.08) 50%, transparent 51%),
+    radial-gradient(1px 1px at 25% 88%, rgba(255, 255, 255, 0.1) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 92% 83%, rgba(255, 255, 255, 0.1) 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 44%, rgba(255, 255, 255, 0.07) 50%, transparent 51%);
+  background-size: 520px 520px;
+}
+
+.metal {
+  background: linear-gradient(160deg, var(--silver-hi) 10%, var(--silver-lo) 55%, #6d6d78 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.tick {
+  animation: tickIn 0.35s ease-out;
+}
+
+@keyframes tickIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.live-dot {
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-bright) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--line-bright);
+}
