@@ -59,7 +59,7 @@ export async function postTweet(text: string, creds: XCreds): Promise<{ ok: bool
 }
 
 function composeTweet(s: Signal): string {
-  const head = `${s.kind} ${s.ticker} · score ${s.score} · ~${s.horizonDays}d horizon`;
+  const head = `${s.kind} $${s.ticker} on @RobinhoodCrypto chain · score ${s.score} · ~${s.horizonDays}d`;
   const tail = "jevnews.dev · not financial advice";
   const budget = 270 - head.length - tail.length - 4;
   let body = s.rationale;
