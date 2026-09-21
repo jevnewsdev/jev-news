@@ -1,4 +1,4 @@
-import { UNIVERSE } from "@/config/universe";
+import { fetchUniverse } from "./universe";
 import { fetchNews } from "./sources";
 import { fetchMarket } from "./market";
 import { judgeArticles, DEFAULT_MODEL } from "./jev";
@@ -29,8 +29,14 @@ async function pool<T>(items: T[], limit: number, worker: (item: T) => Promise<v
  * Per-ticker pipelining: each ticker is judged and signalled as soon as its
  * scan completes, so a live dashboard fills in progressively.
  */
-export async function runAgent(env: RunEnv, trigger: "manual" | "cron", emit: EmitFn): Promise<RunResult> {
+export async function runAgent(
+  env: RunEnv,
+  trigger: "manual" | "cron",
+  emit: EmitFn,
+  tickerLimit?: number,
+): Promise<RunResult> {
   const startedAt = new Date().toISOString();
+  const universe = (await fetchUniverse()).slice(0, tickerLimit ?? Infinity);
   const allArticles: Article[] = [];
   const allJudgments: Judgment[] = [];
   const signals: Signal[] = [];
@@ -41,11 +47,11 @@ export async function runAgent(env: RunEnv, trigger: "manual" | "cron", emit: Em
 
   await emit({ type: "stage", stage: "scan" });
 
-  await pool(UNIVERSE, CONCURRENCY, async (ticker) => {
+  await pool(universe, CONCURRENCY, async (ticker) => {
     const [articles, market] = await Promise.all([fetchNews(ticker), fetchMarket(ticker.symbol)]);
     scanned++;
     allArticles.push(...articles);
-    await emit({ type: "scan", ticker: ticker.symbol, articles, scanned, totalTickers: UNIVERSE.length });
+    await emit({ type: "scan", ticker: ticker.symbol, articles, scanned, totalTickers: universe.length });
     if (articles.length === 0) return;
 
     try {
