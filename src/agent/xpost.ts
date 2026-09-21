@@ -58,11 +58,13 @@ export async function postTweet(text: string, creds: XCreds): Promise<{ ok: bool
   return { ok: res.ok, detail: `${res.status} ${body.slice(0, 200)}` };
 }
 
-function composeTweet(s: Signal): string {
+export function composeTweet(s: Signal): string {
   const head = `${s.kind} $${s.ticker} on @RobinhoodCrypto chain · score ${s.score} · ~${s.horizonDays}d`;
-  const tail = "jevnews.dev · not financial advice";
-  const budget = 270 - head.length - tail.length - 4;
+  const tail = "Automated post by the Jev agent\njevnews.dev · not financial advice";
+  const budget = 272 - head.length - tail.length - 4;
   let body = s.rationale;
+  // The closing "Net ... days." sentence repeats the header, so drop it first.
+  if (body.length > budget) body = body.replace(/\s*Net [^.]*\.\s*$/, "");
   if (body.length > budget) body = body.slice(0, budget - 1).replace(/\s+\S*$/, "") + "…";
   return `${head}\n\n${body}\n\n${tail}`;
 }
