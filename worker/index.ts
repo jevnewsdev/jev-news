@@ -1,5 +1,5 @@
 // Custom Worker entry: OpenNext handles fetch; the cron trigger runs the
-// same Jev pipeline autonomously every 6 hours.
+// same Jev pipeline autonomously every 15 minutes.
 import handler from "../.open-next/worker.js";
 import { runAgent } from "../src/agent/run";
 import { saveRunTo, type KV } from "../src/lib/store";

@@ -16,14 +16,14 @@ function fmtAgo(iso: string | null): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
-/** Next cron fire: every 6h at 00/06/12/18 UTC. */
+/** Next cron fire: every 15 minutes. */
 function fmtNextRun(): string {
   const now = new Date();
   const next = new Date(now);
-  next.setUTCMinutes(0, 0, 0);
-  next.setUTCHours(Math.floor(now.getUTCHours() / 6) * 6 + 6);
-  const mins = Math.round((next.getTime() - now.getTime()) / 60_000);
-  return mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  next.setUTCSeconds(0, 0);
+  next.setUTCMinutes(Math.floor(now.getUTCMinutes() / 15) * 15 + 15);
+  const mins = Math.max(1, Math.round((next.getTime() - now.getTime()) / 60_000));
+  return `${mins}m`;
 }
 
 function XIcon() {
@@ -58,7 +58,7 @@ export default function Dashboard() {
             Jev for Tokenized Markets
           </h1>
           <p className="mt-1 text-[10.5px] text-[var(--faint)] truncate hidden sm:block">
-            Autonomous. Jev reads the wire every 6h and issues buy / risk signals on Robinhood tokenized stocks.
+            Autonomous. Jev reads the wire every 15 minutes and issues buy / risk signals on Robinhood tokenized stocks.
           </p>
         </div>
         <div className="ml-auto flex items-center gap-3 shrink-0">

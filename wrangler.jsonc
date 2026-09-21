@@ -19,7 +19,7 @@
     { "pattern": "www.jevnews.dev", "custom_domain": true }
   ],
   "triggers": {
-    "crons": ["0 */6 * * *"]
+    "crons": ["*/15 * * * *"]
   },
   "vars": {
     "JEV_MODEL": "typesafe/jev-1.13"
